@@ -163,7 +163,7 @@ while not done:
                             neighbor.gcost += current.gcost
                             neighbor.hcost = getManhattanDistance(neighbor.getMyPosition(), endLocation)
                             neighbor.fcost = neighbor.gcost + neighbor.hcost
-                            if neighbor.colour != BLUE and neighbor.colour != GREEN:
+                            if neighbor.colour != BLUE and neighbor.colour != GREEN and neighbor.colour != RED:
                                 neighbor.colour = ORANGE
                             heapq.heappush(open, neighbor)
                     print("FOUND YOU")
