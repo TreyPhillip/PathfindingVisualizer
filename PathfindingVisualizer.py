@@ -12,13 +12,13 @@ import time
 # Blue for end node
 # Red for the closed set
 WHITE = (255, 255, 255)
-GREY = (105,105,105)
+GREY = (47,79,79)
 BLACK = (0,0,0)
 ORANGE = (255,178,102)
 GREEN = (0, 255, 0)
 BLUE = (50, 153, 213)
 RED = (213, 50, 80)
-PURPLE = (255,0,255)
+TEAL = (0,140,140)
 
 WIDTH = 20
 HEIGHT = 20
@@ -26,16 +26,23 @@ MARGIN = 2
 
 SCREEN_SIZE = (883, 883)
 
+#start, end and current nodes for referencing 
 start = None
 current = None
 end = None
+
+# open and closed set. Open is a min heap using heapq
+# closed is regular list
 open = []
 closed = []
-# create grid
-grid = [] 
+# initialize empty grid
+grid = []
+# boolean to check if the program has been ended
+done = False
 
 # node class
 class Node:
+    # initialize node attributes
     def __init__(self, row, col, width):
         self.row = row
         self.col = col
@@ -59,7 +66,6 @@ class Node:
         #     return self.hcost > other.hcost
         return self.fcost < other.fcost
     # get neighbors of self on provided grid
-    #TODO replace neighbor check with in Node for better functionality
     #TODO enable diagonal movement?
     def getNeighbors(self, grid):
         directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
@@ -77,36 +83,31 @@ class Node:
     def makeStart(self):
         self.colour = GREEN
     def makeEnd(self):
-        self.colour = BLUE
+        self.colour = RED
     def makeWall(self):
         self.colour = GREY
     def makeOpen(self):
         self.colour = ORANGE
     def makeClosed(self):
-        self.colour = RED
+        self.colour = BLUE
     def makeBest(self):
-        self.colour = PURPLE
+        self.colour = TEAL
     # set of methods to chek if the node is in a particular state
     def isStart(self):
         return self.colour == GREEN
     def isEnd(self):
-        return self.colour == BLUE
+        return self.colour == RED
     def isWall(self):
         return self.colour == GREY
     def isOpen(self):
         return self.colour == ORANGE
     def isClosed(self):
-        return self.colour == RED
+        return self.colour == BLUE
     def isBest(self):
-        return self.colour == PURPLE
+        return self.colour == TEAL
     #reset node to default white
     def reset(self):
         self.colour = WHITE
-
-#! unused mothod for now. once algorithm is complete may implement
-def getCostForNeighbors(neighbors):
-    for neighbor in neighbors:
-        getManhattanDistance(neighbor.row, neighbor.col)
 
 # get position of node at mouse position
 def getPosition():
@@ -139,24 +140,42 @@ def draw():
             if grid[row][column].isStart():
                 colour = GREEN
             if grid[row][column].isEnd():
-                colour = BLUE
+                colour = RED
             if grid[row][column].isOpen():
                 colour = ORANGE
             if grid[row][column].isClosed():
-                colour = RED
+                colour = BLUE
             if grid[row][column].isBest():
-                colour = PURPLE
+                colour = TEAL
             pygame.draw.rect(
                 display, colour, 
                 [(MARGIN + WIDTH) * column + MARGIN, 
                  (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
-            
 
-def drawShortestPath():
+# starting from end node follow parents to start node for best path
+def drawShortestPath(grid, end):
+    last = end
     for x in range(40):
         for y in range(40):
-            if grid[x][y].parent in closed:
-                grid[x][y].makeBest()
+            if last.parent == start:
+                break
+            lastx, lasty = last.getMyPosition()
+            cameFrom = grid[lastx][lasty].parent
+            cfx, cfy = cameFrom.getMyPosition()
+            if not grid[cfx][cfy].isStart():
+                grid[cfx][cfy].makeBest()
+            last = cameFrom
+
+# reset the grid to be used again
+#TODO bugged. some nodes will not change when algoritm
+def resetGrid():
+    for x in range(40):
+        for y in range(40):
+            grid[x][y].reset()
+            grid[x][y].parent = None
+            grid[x][y].hcost = 0
+            grid[x][y].gcost = math.inf
+            grid[x][y].fcost = 0
 
 # get the "manhattan distance" between two coordinates
 # the absolute value of value 1 in the first coords 
@@ -169,7 +188,9 @@ def getManhattanDistance(pt1, pt2):
         distance += abs(pt1[i] - pt2[i])
     return distance
 
-# TODO: write comments once algorithm is complete
+# TODO: comments
+# starting from start node, evaluate neighboring nodes to 
+# find best path to end node
 def algorithm(grid, current, start, end):
     start.gcost = 0
     start.fcost = getManhattanDistance(start.getMyPosition(), end.getMyPosition())
@@ -208,8 +229,9 @@ def algorithm(grid, current, start, end):
                     neighbor.parent = current
                     if not neighbor.isEnd():
                         neighbor.makeOpen()
-                    print("Neighbors for current", neighbor.fcost)
-                    heapq.heappush(open, neighbor)       
+                    print("Neighbors for current. FCOST: ", neighbor.fcost)
+                    heapq.heappush(open, neighbor)  
+        drawShortestPath(grid, end)     
         print("FOUND YOU")     
 
 # initialize the grid with Node objects
@@ -228,32 +250,43 @@ display = pygame.display.set_mode((883, 883))
 
 # set caption of the display
 pygame.display.set_caption('Pathfinding Visualizer')
-done = False
 clock = pygame.time.Clock()
 
-while not done:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
-        elif pygame.mouse.get_pressed()[0]:
-            mouseClick(start, end, grid)
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_s:    
-                if not start:
-                    row, col = getPosition()
-                    start = grid[row][col]
-                    grid[row][col].makeStart()
-            elif event.key == pygame.K_e:
-                if not end:
-                    row, col = getPosition()
-                    end = grid[row][col]
-                    grid[row][col].makeEnd()           
-            elif event.key == pygame.K_SPACE:
-                algorithm(grid, current, start, end)
-    display.fill(BLACK)
-    # draw
-    # drawShortestPath()
-    draw()
-    clock.tick(60)
-    pygame.display.update()
+# check for inputs and execute tasks based on said inputs
+def main(done, start, current, end, grid):
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+            elif pygame.mouse.get_pressed()[0]:
+                mouseClick(start, end, grid)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:    
+                    if not start:
+                        row, col = getPosition()
+                        start = grid[row][col]
+                        grid[row][col].makeStart()
+                elif event.key == pygame.K_e:
+                    if not end:
+                        row, col = getPosition()
+                        end = grid[row][col]
+                        grid[row][col].makeEnd()
+                #! bugged
+                elif event.key == pygame.K_r:
+                    start = None
+                    end = None
+                    current = None
+                    resetGrid()
+                    main(done, start, current, end, grid)      
+                elif event.key == pygame.K_SPACE:
+                    algorithm(grid, current, start, end)
+        display.fill(BLACK)
+        # draw
+        draw()
+        clock.tick(60)
+        pygame.display.update()
+
+main(done, start, current, end, grid)
+
+#quit fuction for pygame
 pygame.quit()
