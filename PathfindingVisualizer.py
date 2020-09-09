@@ -5,12 +5,13 @@ import time
 
 # colours
 # white for the default nodes
-# Grey fo the walls or obstacles
+# Grey for the walls or obstacles
 # black for node margins
 # Orange for nodes in the open set
 # green for start node
-# Blue for end node
-# Red for the closed set
+# red for end node
+# blue for the closed set
+# darker blue for the best path
 WHITE = (255, 255, 255)
 GREY = (47,79,79)
 BLACK = (0,0,0)
@@ -18,7 +19,7 @@ ORANGE = (255,178,102)
 GREEN = (0, 255, 0)
 BLUE = (50, 153, 213)
 RED = (213, 50, 80)
-TEAL = (0,140,140)
+DARK_BLUE = (65,105,225)
 
 WIDTH = 20
 HEIGHT = 20
@@ -91,7 +92,7 @@ class Node:
     def makeClosed(self):
         self.colour = BLUE
     def makeBest(self):
-        self.colour = TEAL
+        self.colour = DARK_BLUE
     # set of methods to chek if the node is in a particular state
     def isStart(self):
         return self.colour == GREEN
@@ -104,7 +105,7 @@ class Node:
     def isClosed(self):
         return self.colour == BLUE
     def isBest(self):
-        return self.colour == TEAL
+        return self.colour == DARK_BLUE
     #reset node to default white
     def reset(self):
         self.colour = WHITE
@@ -120,14 +121,19 @@ def getPosition():
 # set of action to take on mouse click
 # checks to see if node is start or end to allow replacing of them
 # then turns clicked nodes into walls
+#! removing walls is kinda buggy, but works
 def mouseClick(start, end, grid):
     row, col = getPosition()
-    if grid[row][col] == start:
+    if grid[row][col].isStart():
         start = None
-        grid[row][col].reset()
-    if grid[row][col] == end:
+        grid[row][col].makeWall()
+    elif grid[row][col].isEnd():
         end = None
-    grid[row][col].makeWall()
+        grid[row][col].makeWall()
+    elif grid[row][col].isWall():
+        grid[row][col].reset()
+    else:
+        grid[row][col].makeWall()
     print("Grid coordinates: ", row, col)
 
 # draw nodes on screen and draw colors based on class method returns
@@ -146,7 +152,7 @@ def draw():
             if grid[row][column].isClosed():
                 colour = BLUE
             if grid[row][column].isBest():
-                colour = TEAL
+                colour = DARK_BLUE
             pygame.draw.rect(
                 display, colour, 
                 [(MARGIN + WIDTH) * column + MARGIN, 
@@ -190,6 +196,12 @@ def getManhattanDistance(pt1, pt2):
 # TODO: comments
 # starting from start node, evaluate neighboring nodes to 
 # find best path to end node
+#* algorithm is done in A* style. The algorithm knows the 
+#* location of the end node and makes its decision with another 
+#* function that gets the a heuristic for the distance between the 
+#* current node and the end node gives each node it discovers
+#* a value of the distance from the start to the current node plus the heuristic
+#* then, it chooses the current cheapest node, repeating untill end is found
 def algorithm(grid, current, start, end):
     start.gcost = 0
     start.fcost = getManhattanDistance(start.getMyPosition(), end.getMyPosition())
@@ -200,11 +212,9 @@ def algorithm(grid, current, start, end):
         print("select an end node")
     else:
         while open[0] != end:   
-            # print("not at end node. Searching...")
             # get the best node from open set 
             # and make that current node
             current = heapq.heappop(open)
-            print(current.fcost, current.getMyPosition(), "best node chosen")
             if not current.isStart() and not current.isEnd():
                 current.makeClosed() 
             closed.append(current)   
@@ -264,11 +274,39 @@ while not done:
                     row, col = getPosition()
                     start = grid[row][col]
                     grid[row][col].makeStart()
+                elif start:
+                    for x in range(40):
+                        for y in range(40):
+                            if grid[x][y].isStart():
+                                start = None
+                                grid[x][y].reset()
+                            row, col = getPosition()
+                            if grid[row][col].isEnd():
+                                end = None
+                                start = grid[row][col]
+                                grid[row][col].makeStart()
+                            else:
+                                start = grid[row][col]
+                                grid[row][col].makeStart()
             elif event.key == pygame.K_e:
                 if not end:
                     row, col = getPosition()
                     end = grid[row][col]
                     grid[row][col].makeEnd()
+                elif end:
+                    for x in range(40):
+                        for y in range(40):
+                            if grid[x][y].isEnd():
+                                end = None
+                                grid[x][y].reset()
+                            row, col = getPosition()
+                            if grid[row][col].isStart():
+                                start = None
+                                end = grid[row][col]
+                                grid[row][col].makeEnd()
+                            else:
+                                end = grid[row][col]
+                                grid[row][col].makeEnd()
             elif event.key == pygame.K_r:
                 start = None
                 end = None
