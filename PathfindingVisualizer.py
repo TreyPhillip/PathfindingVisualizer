@@ -167,7 +167,6 @@ def drawShortestPath(grid, end):
             last = cameFrom
 
 # reset the grid to be used again
-#TODO bugged. some nodes will not change when algoritm
 def resetGrid():
     for x in range(40):
         for y in range(40):
@@ -253,40 +252,37 @@ pygame.display.set_caption('Pathfinding Visualizer')
 clock = pygame.time.Clock()
 
 # check for inputs and execute tasks based on said inputs
-def main(done, start, current, end, grid):
-    while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-            elif pygame.mouse.get_pressed()[0]:
-                mouseClick(start, end, grid)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_s:    
-                    if not start:
-                        row, col = getPosition()
-                        start = grid[row][col]
-                        grid[row][col].makeStart()
-                elif event.key == pygame.K_e:
-                    if not end:
-                        row, col = getPosition()
-                        end = grid[row][col]
-                        grid[row][col].makeEnd()
-                #! bugged
-                elif event.key == pygame.K_r:
-                    start = None
-                    end = None
-                    current = None
-                    resetGrid()
-                    main(done, start, current, end, grid)      
-                elif event.key == pygame.K_SPACE:
-                    algorithm(grid, current, start, end)
-        display.fill(BLACK)
-        # draw
-        draw()
-        clock.tick(60)
-        pygame.display.update()
-
-main(done, start, current, end, grid)
+while not done:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            done = True
+        elif pygame.mouse.get_pressed()[0]:
+            mouseClick(start, end, grid)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_s:    
+                if not start:
+                    row, col = getPosition()
+                    start = grid[row][col]
+                    grid[row][col].makeStart()
+            elif event.key == pygame.K_e:
+                if not end:
+                    row, col = getPosition()
+                    end = grid[row][col]
+                    grid[row][col].makeEnd()
+            elif event.key == pygame.K_r:
+                start = None
+                end = None
+                current = None
+                closed = []
+                open = []
+                resetGrid()      
+            elif event.key == pygame.K_SPACE:
+                algorithm(grid, current, start, end)
+    display.fill(BLACK)
+    # draw
+    draw()
+    clock.tick(60)
+    pygame.display.update()
 
 #quit fuction for pygame
 pygame.quit()
