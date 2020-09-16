@@ -118,10 +118,9 @@ def getPosition():
     coords = (row, column)
     return coords
 
-# set of action to take on mouse click
+# set of action to take on mouse LEFT click
 # checks to see if node is start or end to allow replacing of them
 # then turns clicked nodes into walls
-#! removing walls is kinda buggy, but works
 def mouseClick(start, end, grid):
     row, col = getPosition()
     if grid[row][col].isStart():
@@ -134,6 +133,9 @@ def mouseClick(start, end, grid):
         grid[row][col].makeWall()
     print("Grid coordinates: ", row, col)
 
+# set of action to take on mouse RIGHT click
+# checks to see if node is start or end to allow replacing of them
+# then resets clicked node
 def resetNode(start, end, grid):
     row, col = getPosition()
     if grid[row][col].isStart():
@@ -203,13 +205,12 @@ def getManhattanDistance(pt1, pt2):
         distance += abs(pt1[i] - pt2[i])
     return distance
 
-# TODO: comments
 # starting from start node, evaluate neighboring nodes to 
 # find best path to end node
 #* algorithm is done in A* style. The algorithm knows the 
 #* location of the end node and makes its decision with another 
-#* function that gets the a heuristic for the distance between the 
-#* current node and the end node gives each node it discovers
+#* function that gets a heuristic for the distance between the 
+#* current node and the end node. gives each node it discovers
 #* a value of the distance from the start to the current node plus the heuristic
 #* then, it chooses the current cheapest node, repeating untill end is found
 def algorithm(grid, current, start, end):
