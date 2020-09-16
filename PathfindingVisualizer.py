@@ -130,10 +130,20 @@ def mouseClick(start, end, grid):
     elif grid[row][col].isEnd():
         end = None
         grid[row][col].makeWall()
-    elif grid[row][col].isWall():
-        grid[row][col].reset()
     else:
         grid[row][col].makeWall()
+    print("Grid coordinates: ", row, col)
+
+def resetNode(start, end, grid):
+    row, col = getPosition()
+    if grid[row][col].isStart():
+        start = None
+        grid[row][col].reset()
+    elif grid[row][col].isEnd():
+        end = None
+        grid[row][col].reset()
+    else:
+        grid[row][col].reset()
     print("Grid coordinates: ", row, col)
 
 # draw nodes on screen and draw colors based on class method returns
@@ -258,7 +268,7 @@ pygame.init()
 display = pygame.display.set_mode((883, 883))
 
 # set caption of the display
-pygame.display.set_caption('Pathfinding Visualizer')
+pygame.display.set_caption('Pathfinding Visualizer - S for Start node - E for End - Left Click for wall - Right Click for reset selected - R reset all - SPACE to run')
 clock = pygame.time.Clock()
 
 # check for inputs and execute tasks based on said inputs
@@ -266,9 +276,11 @@ while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
-        elif pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_pressed()[0]:
             mouseClick(start, end, grid)
-        elif event.type == pygame.KEYDOWN:
+        if pygame.mouse.get_pressed()[2]:
+            resetNode(start, end, grid)
+        if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s:    
                 if not start:
                     row, col = getPosition()
