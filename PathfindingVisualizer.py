@@ -3,6 +3,8 @@ import heapq
 import pygame
 import time
 
+# TODO: Add Popup windows
+
 # colours
 # white for the default nodes
 # Grey for the walls or obstacles
@@ -213,16 +215,19 @@ def getManhattanDistance(pt1, pt2):
 #* current node and the end node. gives each node it discovers
 #* a value of the distance from the start to the current node plus the heuristic
 #* then, it chooses the current cheapest node, repeating untill end is found
+
 def algorithm(grid, current, start, end):
+    if not start:
+        print("select a start node")
+        return
+    elif not end:
+        print("select an end node")
+        return
     start.gcost = 0
     start.fcost = getManhattanDistance(start.getMyPosition(), end.getMyPosition())
     heapq.heappush(open, start)
-    if not open:
-        print("select a start node")
-    elif not end:
-        print("select an end node")
-    else:
-        while open[0] != end:   
+    if open:
+        while open[0] != end:
             # get the best node from open set 
             # and make that current node
             current = heapq.heappop(open)
@@ -250,9 +255,12 @@ def algorithm(grid, current, start, end):
                     if not neighbor.isEnd():
                         neighbor.makeOpen()
                     print("Neighbors for current. FCOST: ", neighbor.fcost)
-                    heapq.heappush(open, neighbor)  
+                    heapq.heappush(open, neighbor) 
+                if not open:
+                        print("connot find end node")
+                        return
         drawShortestPath(grid, end)     
-        print("FOUND YOU")     
+        print("FOUND YOU")  
 
 # initialize the grid with Node objects
 for x in range(40):
