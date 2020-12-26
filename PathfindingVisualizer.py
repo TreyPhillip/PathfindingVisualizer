@@ -4,6 +4,7 @@ import pygame
 import time
 
 # TODO: Add Popup windows
+# TODO: Bug with one wide pathways around starting node
 
 # colours
 # white for the default nodes
