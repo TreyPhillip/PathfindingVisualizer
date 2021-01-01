@@ -3,9 +3,13 @@ import heapq
 import pygame
 import time
 
-# TODO: Add Popup windows
+# TODO 
+# functionality to re-run the algorithm with the current maze
+# Add Popup windows/menus 
+# add options to pre-genterate a maze for the user
+# resize window to add more nodes
 
-# colours
+# tuples for RGB values of the screen and different node states. subject to change while searching for best clarity
 # white for the default nodes
 # Grey for the walls or obstacles
 # black for node margins
@@ -13,15 +17,15 @@ import time
 # green for start node
 # red for end node
 # blue for the closed set
-# darker blue for the best path
-WHITE = (255, 255, 255)
-GREY = (47,79,79)
-BLACK = (0,0,0)
-ORANGE = (255,178,102)
-GREEN = (0, 255, 0)
-BLUE = (50, 153, 213)
-RED = (213, 50, 80)
-DARK_BLUE = (65,105,225)
+# yellow for the best path
+NODE_COLOUR = (255, 255, 255)
+WALL_COLOUR = (47,79,79)
+MARGIN_COLOUR = (0,0,0)
+OPEN_COLOUR = (255,178,102)
+START_COLOUR = (0, 255, 0)
+CLOSED_COLOUR = (82, 191, 255)
+END_COLOUR = (213, 50, 80)
+BEST_PATH_COLOUR = (243, 255, 82)
 
 WIDTH = 20
 HEIGHT = 20
@@ -53,7 +57,7 @@ class Node:
         self.y = col * width
         self.width = width
         self.height = height
-        self.colour = WHITE
+        self.colour = NODE_COLOUR
         self.parent = None
         self.gcost = math.inf
         self.hcost = 0
@@ -88,33 +92,33 @@ class Node:
         return result
     # set of methods to change Node colour based on node type
     def makeStart(self):
-        self.colour = GREEN
+        self.colour = START_COLOUR
     def makeEnd(self):
-        self.colour = RED
+        self.colour = END_COLOUR
     def makeWall(self):
-        self.colour = GREY
+        self.colour = WALL_COLOUR
     def makeOpen(self):
-        self.colour = ORANGE
+        self.colour = OPEN_COLOUR
     def makeClosed(self):
-        self.colour = BLUE
+        self.colour = CLOSED_COLOUR
     def makeBest(self):
-        self.colour = DARK_BLUE
+        self.colour = BEST_PATH_COLOUR
     # set of methods to chek if the node is in a particular state
     def isStart(self):
-        return self.colour == GREEN
+        return self.colour == START_COLOUR
     def isEnd(self):
-        return self.colour == RED
+        return self.colour == END_COLOUR
     def isWall(self):
-        return self.colour == GREY
+        return self.colour == WALL_COLOUR
     def isOpen(self):
-        return self.colour == ORANGE
+        return self.colour == OPEN_COLOUR
     def isClosed(self):
-        return self.colour == BLUE
+        return self.colour == CLOSED_COLOUR
     def isBest(self):
-        return self.colour == DARK_BLUE
+        return self.colour == BEST_PATH_COLOUR
     #reset node to default white
     def reset(self):
-        self.colour = WHITE
+        self.colour = NODE_COLOUR
 
 # get position of node at mouse position
 def getPosition():
@@ -156,19 +160,19 @@ def resetNode(start, end, grid):
 def draw():
     for row in range(40):
         for column in range(40):
-            colour = WHITE
+            colour = NODE_COLOUR
             if grid[row][column].isWall():
-                colour = GREY
+                colour = WALL_COLOUR
             if grid[row][column].isStart():
-                colour = GREEN
+                colour = START_COLOUR
             if grid[row][column].isEnd():
-                colour = RED
+                colour = END_COLOUR
             if grid[row][column].isOpen():
-                colour = ORANGE
+                colour = OPEN_COLOUR
             if grid[row][column].isClosed():
-                colour = BLUE
+                colour = CLOSED_COLOUR
             if grid[row][column].isBest():
-                colour = DARK_BLUE
+                colour = BEST_PATH_COLOUR
             pygame.draw.rect(
                 display, colour,
                 [(MARGIN + WIDTH) * column + MARGIN,
@@ -198,6 +202,11 @@ def resetGrid(grid):
             grid[x][y].hcost = 0
             grid[x][y].gcost = math.inf
             grid[x][y].fcost = 0
+
+def resetForReRun(grid):
+    for x in range(40):
+        for y in range(40):
+            grid[x][y]
 
 # get the "manhattan distance" between two coordinates
 # the absolute value of value 1 in the first coords 
@@ -350,7 +359,7 @@ while not done:
                 resetGrid(grid)      
             elif event.key == pygame.K_SPACE:
                 algorithm(grid, current, start, end)
-    display.fill(BLACK)
+    display.fill(MARGIN_COLOUR)
     # draw
     draw()
     pygame.display.update()
