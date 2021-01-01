@@ -4,7 +4,6 @@ import pygame
 import time
 
 # TODO: Add Popup windows
-# TODO: Bug with one wide pathways around starting node
 
 # colours
 # white for the default nodes
@@ -260,11 +259,11 @@ def algorithm(grid, current, start, end):
                     if not neighbor.isEnd():
                         neighbor.makeOpen()
                         neighbor.draw(display)
-                    #print("Neighbors for current. FCOST: ", neighbor.fcost)
+                    print("Neighbors for current. FCOST: ", neighbor.fcost)
                     heapq.heappush(open, neighbor) 
-                if not open:
-                        print("connot find end node")
-                        return                
+            if not open:
+                    print("connot find end node")
+                    return                
         drawShortestPath(grid, end)     
         print("FOUND YOU")  
 
