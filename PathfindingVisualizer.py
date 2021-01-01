@@ -30,7 +30,7 @@ MARGIN = 2
 
 SCREEN_SIZE = (883, 883)
 
-#start, end and current nodes for referencing 
+# start, end and current nodes for referencing 
 start = None
 current = None
 end = None
@@ -47,12 +47,13 @@ done = False
 # node class
 class Node:
     # initialize node attributes
-    def __init__(self, row, col, width):
+    def __init__(self, row, col, width, height):
         self.row = row
         self.col = col
         self.x = row * width
         self.y = col * width
         self.width = width
+        self.height = height
         self.colour = WHITE
         self.parent = None
         self.gcost = math.inf
@@ -61,9 +62,12 @@ class Node:
     # return position of self. grid[i][i].getMyPosition
     def getMyPosition(self):
         return self.row, self.col
-    #! unused so far. may implement later
+    # node draws itself
     def draw(self, display):
-        pygame.draw.rect(display, self.colour, (self.x, self.y, self.width, self.width))
+        pygame.draw.rect(display, self.colour,
+        [(MARGIN + WIDTH) * self.col + MARGIN,
+         (MARGIN + HEIGHT) * self.row + MARGIN, WIDTH, HEIGHT])
+        pygame.display.update()
     # used when Python compares one node against another in a heap
     def __lt__(self, other):
         # if self.fcost == other.fcost:
@@ -124,7 +128,7 @@ def getPosition():
 # set of action to take on mouse LEFT click
 # checks to see if node is start or end to allow replacing of them
 # then turns clicked nodes into walls
-def mouseClick(start, end, grid):
+def placeWalls(start, end, grid):
     row, col = getPosition()
     if grid[row][col].isStart():
         start = None
@@ -134,7 +138,6 @@ def mouseClick(start, end, grid):
         grid[row][col].makeWall()
     else:
         grid[row][col].makeWall()
-    print("Grid coordinates: ", row, col)
 
 # set of action to take on mouse RIGHT click
 # checks to see if node is start or end to allow replacing of them
@@ -149,8 +152,7 @@ def resetNode(start, end, grid):
         grid[row][col].reset()
     else:
         grid[row][col].reset()
-    print("Grid coordinates: ", row, col)
-
+    
 # draw nodes on screen and draw colors based on class method returns
 def draw():
     for row in range(40):
@@ -169,8 +171,8 @@ def draw():
             if grid[row][column].isBest():
                 colour = DARK_BLUE
             pygame.draw.rect(
-                display, colour, 
-                [(MARGIN + WIDTH) * column + MARGIN, 
+                display, colour,
+                [(MARGIN + WIDTH) * column + MARGIN,
                  (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
 
 # starting from end node follow parents to start node for best path
@@ -185,10 +187,11 @@ def drawShortestPath(grid, end):
             cfx, cfy = cameFrom.getMyPosition()
             if not grid[cfx][cfy].isStart():
                 grid[cfx][cfy].makeBest()
+            grid[cfx][cfx].draw(display)
             last = cameFrom
 
 # reset the grid to be used again
-def resetGrid():
+def resetGrid(grid):
     for x in range(40):
         for y in range(40):
             grid[x][y].reset()
@@ -229,12 +232,13 @@ def algorithm(grid, current, start, end):
     heapq.heappush(open, start)
     if open:
         while open[0] != end:
-            # get the best node from open set 
+            # get the best node from open set
             # and make that current node
             current = heapq.heappop(open)
             if not current.isStart() and not current.isEnd():
-                current.makeClosed() 
-            closed.append(current)   
+                current.makeClosed()
+                current.draw(display)
+            closed.append(current)
             neighbors = current.getNeighbors(grid)
             for neighbor in neighbors:
                 cost = None
@@ -255,11 +259,12 @@ def algorithm(grid, current, start, end):
                     neighbor.parent = current
                     if not neighbor.isEnd():
                         neighbor.makeOpen()
-                    print("Neighbors for current. FCOST: ", neighbor.fcost)
+                        neighbor.draw(display)
+                    #print("Neighbors for current. FCOST: ", neighbor.fcost)
                     heapq.heappush(open, neighbor) 
                 if not open:
                         print("connot find end node")
-                        return
+                        return                
         drawShortestPath(grid, end)     
         print("FOUND YOU")  
 
@@ -267,7 +272,7 @@ def algorithm(grid, current, start, end):
 for x in range(40):
     grid.append([])
     for y in range(40):
-        node = Node(x, y, MARGIN)
+        node = Node(x, y, WIDTH, HEIGHT)
         grid[x].append(node)
 
 # init function for pygame
@@ -283,36 +288,45 @@ clock = pygame.time.Clock()
 
 # check for inputs and execute tasks based on said inputs
 while not done:
+    clock.tick(60)
     for event in pygame.event.get():
+        # exit game 
         if event.type == pygame.QUIT:
             done = True
-        if pygame.mouse.get_pressed()[0]:
-            mouseClick(start, end, grid)
-        if pygame.mouse.get_pressed()[2]:
+        # place walls
+        elif pygame.mouse.get_pressed()[0]:
+            placeWalls(start, end, grid)
+
+        # reset selected node
+        elif pygame.mouse.get_pressed()[2]:
             resetNode(start, end, grid)
-        if event.type == pygame.KEYDOWN:
+
+        # keypress events
+        elif event.type == pygame.KEYDOWN:
+            # check if the start node has been placed if not, 
+            # set node to star if it has been placed, remove 
+            # the current node and place it in new location.
             if event.key == pygame.K_s:    
-                if not start:
-                    row, col = getPosition()
+                row, col = getPosition()
+                if not start:   
                     start = grid[row][col]
-                    grid[row][col].makeStart()
-                elif start:
+                    grid[row][col].makeStart()                 
+                else:
                     for x in range(40):
                         for y in range(40):
                             if grid[x][y].isStart():
                                 start = None
                                 grid[x][y].reset()
-                            row, col = getPosition()
-                            if grid[row][col].isEnd():
-                                end = None
-                                start = grid[row][col]
-                                grid[row][col].makeStart()
-                            else:
-                                start = grid[row][col]
-                                grid[row][col].makeStart()
+                    if grid[row][col].isEnd():
+                        end = None
+                        start = grid[row][col]
+                        grid[row][col].makeStart()
+                    else:
+                        start = grid[row][col]
+                        grid[row][col].makeStart()
             elif event.key == pygame.K_e:
+                row, col = getPosition()
                 if not end:
-                    row, col = getPosition()
                     end = grid[row][col]
                     grid[row][col].makeEnd()
                 elif end:
@@ -321,8 +335,7 @@ while not done:
                             if grid[x][y].isEnd():
                                 end = None
                                 grid[x][y].reset()
-                            row, col = getPosition()
-                            if grid[row][col].isStart():
+                            elif grid[row][col].isStart():
                                 start = None
                                 end = grid[row][col]
                                 grid[row][col].makeEnd()
@@ -335,13 +348,12 @@ while not done:
                 current = None
                 closed = []
                 open = []
-                resetGrid()      
+                resetGrid(grid)      
             elif event.key == pygame.K_SPACE:
                 algorithm(grid, current, start, end)
     display.fill(BLACK)
     # draw
     draw()
-    clock.tick(60)
     pygame.display.update()
 
 #quit fuction for pygame
