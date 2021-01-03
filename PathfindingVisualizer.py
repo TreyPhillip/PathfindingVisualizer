@@ -44,6 +44,9 @@ open = []
 closed = []
 # initialize empty grid
 grid = []
+# boolean to check if the program has already been run,
+#  if it has, will reset only certain nodes to be rerun
+rerun = False
 # boolean to check if the program has been ended
 done = False
 
@@ -155,7 +158,7 @@ def resetNode(start, end, grid):
         grid[row][col].reset()
     else:
         grid[row][col].reset()
-    
+
 # draw nodes on screen and draw colors based on class method returns
 def draw():
     for row in range(40):
@@ -193,7 +196,7 @@ def drawShortestPath(grid, end):
             grid[cfx][cfx].draw(display)
             last = cameFrom
 
-# reset the grid to be used again
+# reset the grid completely
 def resetGrid(grid):
     for x in range(40):
         for y in range(40):
@@ -203,10 +206,21 @@ def resetGrid(grid):
             grid[x][y].gcost = math.inf
             grid[x][y].fcost = 0
 
+# reset the grid keeping the walls, start and end nodes
 def resetForReRun(grid):
     for x in range(40):
         for y in range(40):
-            grid[x][y]
+            if grid[x][y].isStart() or grid[x][y].isEnd() or grid[x][y].isWall():
+                grid[x][y].parent = None
+                grid[x][y].hcost = 0
+                grid[x][y].gcost = math.inf
+                grid[x][y].fcost = 0
+            else:
+                grid[x][y].reset()
+                grid[x][y].parent = None
+                grid[x][y].hcost = 0
+                grid[x][y].gcost = math.inf
+                grid[x][y].fcost = 0
 
 # get the "manhattan distance" between two coordinates
 # the absolute value of value 1 in the first coords 
@@ -221,7 +235,7 @@ def getManhattanDistance(pt1, pt2):
 
 # starting from start node, evaluate neighboring nodes to 
 # find best path to end node
-#* algorithm is done in A* style. The algorithm knows the 
+#* algorithm is A*. This algorithm knows the 
 #* location of the end node and makes its decision with another 
 #* function that gets a heuristic for the distance between the 
 #* current node and the end node. gives each node it discovers
@@ -356,9 +370,20 @@ while not done:
                 current = None
                 closed = []
                 open = []
-                resetGrid(grid)      
+                resetGrid(grid)
+                rerun = False
             elif event.key == pygame.K_SPACE:
-                algorithm(grid, current, start, end)
+                if not rerun:
+                    algorithm(grid, current, start, end)
+                    rerun = True
+                else:
+                    current = None
+                    closed = []
+                    open = []
+                    resetForReRun(grid)
+                    draw()
+                    pygame.display.update()
+                    algorithm(grid, current, start, end)
     display.fill(MARGIN_COLOUR)
     # draw
     draw()
