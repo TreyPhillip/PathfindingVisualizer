@@ -4,7 +4,6 @@ import pygame
 import time
 
 # TODO 
-# functionality to re-run the algorithm with the current maze
 # Add Popup windows/menus 
 # add options to pre-genterate a maze for the user
 # resize window to add more nodes
