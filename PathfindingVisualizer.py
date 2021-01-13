@@ -3,8 +3,8 @@ import heapq
 import pygame
 import time
 
-# TODO 
-# Add Popup windows/menus 
+# TODO
+# Add Popup windows/menus
 # add options to pre-genterate a maze for the user
 # resize window to add more nodes
 
